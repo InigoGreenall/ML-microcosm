@@ -9,7 +9,7 @@ extern "C" {
 extern EntityMap* entity_map;
 
 void frame_drawer(void* pixel_buffer) {
-    Olivec_Canvas oc = olivec_canvas((uint32_t*) pixel_buffer, WDITH, HEIGHT, WDITH);
+    Olivec_Canvas oc = olivec_canvas((uint32_t*) pixel_buffer, WIDTH, HEIGHT, WIDTH);
     olivec_fill(oc, 0xFFFFFFFF);
 
     for (unsigned short i = 0; i < entity_map->entities.size(); i++) {

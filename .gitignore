@@ -71,3 +71,5 @@ Testing/
 !testing-include/libwayland-client.so.0.24.0
 !testing-include/libwlclient.a
 main
+
+tasks.json
