@@ -95,6 +95,7 @@ EntityMap::EntityMap() {}
 
 
 void EntityMap::do_tick() {
+	this->check_collisions();
 	// 1. Handle Collisions
 		// TODO: Boundary collisions
 		// TODO: Handle eating
@@ -134,6 +135,9 @@ void EntityMap::check_collisions() {
 			for (int j = i+1; j < v.size(); j++) {
 				Entity* e1 = v.at(i);
 				Entity* e2 = v.at(j);
+				
+				if (e2->size >= e1->size * 1.5) {
+
 
 				if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
 					handle_collision(e1, e2);
