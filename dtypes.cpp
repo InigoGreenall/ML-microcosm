@@ -1,8 +1,11 @@
 #include "main.hpp"
 #include "dtypes.hpp"
 #include <cmath>
+#include <cstdlib>
 #include <vector>
 
+//###################################################
+// Vec2
 Vec2::Vec2(float x, float y) :
 	x(x),
 	y(y)
@@ -31,6 +34,10 @@ float Vec2::length() const {
 	return std::sqrt(x*x + y*y);
 }
 
+float Vec2::distance(Vec2 v) {
+	return std::sqrt((x-v.x)*(x-v.x) + (y-v.y)*(y-v.y));
+}
+
 Vec2 Vec2::normalise() const {
 	float mag = length();
 
@@ -39,7 +46,6 @@ Vec2 Vec2::normalise() const {
 	} else {
 		return Vec2(x/mag, y/mag);
 	}
-
 }
 
 //######################################################
@@ -135,9 +141,13 @@ void EntityMap::check_collisions() {
 			for (int j = i+1; j < v.size(); j++) {
 				Entity* e1 = v.at(i);
 				Entity* e2 = v.at(j);
-				
-				if (e2->size >= e1->size * 1.5) {
+				// Let e1 be the larger
+				if (e2->size >= e1->size) { Entity* temp = e2; e2 = e1; e1 = temp; }
 
+				if (e1->size >= e2->size * 1.5) {
+					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size)
+						handle_eat(e1, e2);
+				}
 
 				if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
 					handle_collision(e1, e2);
@@ -169,4 +179,8 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 	//theres some complicated signage here so if it completely breaks after a single collision, this will be why.
 	e1->velocity += I * (1.0/e1->size);
 	e2->velocity += I * (-1.0/e2->size);
+}
+
+void EntityMap::handle_eat(Entity* e1, Entity* e2) {
+
 }

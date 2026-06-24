@@ -17,6 +17,7 @@ struct Vec2 {
     Vec2 operator*(float f) const;
 
     float length() const;
+    float distance(Vec2 v);
     Vec2 normalise() const;
 };
 
@@ -56,6 +57,7 @@ class EntityMap {
         void update_collision_grid();
         void check_collisions();
         void handle_collision(Entity* e1, Entity* e2);
+        void handle_eat(Entity* e1, Entity* e2);
 };
 
 #endif
