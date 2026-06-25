@@ -101,27 +101,32 @@ EntityMap::EntityMap() {}
 
 
 void EntityMap::do_tick() {
-	this->check_collisions();
 	// 1. Handle Collisions
-		// TODO: Boundary collisions
-		// TODO: Handle eating
+		// TEST: Boundary collisions
+		// TEST: Handle eating
+	this->check_collisions();
 
 	// 2. Update FOV raycasts
 		// TODO: Entity::raycasts (std::Array<float, N>)
 		// TODO: Entity::update_raycasts()
 	
-	// 3. Run ML Nets (generate "acceleration")
+	// 3. Run Network prediction (entity "decides" acceleration)
 		// DONE: install libtorch
 		// DONE: copy model.py into cpp
 		// DONE: Vec2 Entity::query_model()
+		// TEST: update velocity from acceleration
+	for (Entity* e : this->entities) {
+		e->acceleration = e->query_model();
+		e->velocity += e->acceleration;
+	}
 	
-	// 4. Update values from Nets
-		// a. update velocity based on acceleration
-
-		// TODO: 
-	
-	// 5. Update positions
+	// 4. Update positions
 		// TODO: void EntityMap::update_positions()
+	// example code for testing
+	for (Entity* e : this->entities) {
+		e->x += e->velocity.x;
+		e->y += e->velocity.y;
+	}
 
 }
 
@@ -138,20 +143,27 @@ void EntityMap::update_collision_grid() {
 void EntityMap::check_collisions() {
 	for (std::vector<Entity*>& v : collision_grid) {
 		for (int i = 0; i < v.size(); i++) {
+			Entity* e1 = v.at(i);
 			for (int j = i+1; j < v.size(); j++) {
-				Entity* e1 = v.at(i);
 				Entity* e2 = v.at(j);
 				// Let e1 be the larger
 				if (e2->size >= e1->size) { Entity* temp = e2; e2 = e1; e1 = temp; }
-
+				// check for eating
 				if (e1->size >= e2->size * 1.5) {
 					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size)
 						handle_eat(e1, e2);
 				}
-
+				// check for entity collisions
 				if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
 					handle_collision(e1, e2);
 				}
+			}
+			// check for boundary collisions & apply fully elastic bounce
+			if (e1->x + e1->size > WIDTH || e1->x - e1->size < 0) {
+				e1->velocity.x = -e1->velocity.x;
+			}
+			if (e1->y + e1->size > HEIGHT || e1->y - e1->size < 0) {
+				e1->velocity.y = -e1->velocity.y;;
 			}
 		}
 	}
@@ -181,6 +193,13 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 	e2->velocity += I * (-1.0/e2->size);
 }
 
+// Apply the effect of e1 "eating" e2
 void EntityMap::handle_eat(Entity* e1, Entity* e2) {
 
+	// TODO: do we have to deallocate the Entity e2?
+
+	e1->size += e2->size/2;
+	e1->velocity = Vec2(0, 0);
+	delete e2;
+	e2 = nullptr;
 }
