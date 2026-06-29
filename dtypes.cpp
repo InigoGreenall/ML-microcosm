@@ -1,7 +1,9 @@
 #include "main.hpp"
 #include "dtypes.hpp"
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
+#include <utility>
 #include <vector>
 
 //###################################################
@@ -104,30 +106,33 @@ void EntityMap::do_tick() {
 	// 1. Handle Collisions
 		// TEST: Boundary collisions
 		// TEST: Handle eating
-	this->check_collisions();
+		this->check_collisions();
+		
+		this->compress_entities();
 
-	// 2. Update FOV raycasts
+		// 2. Update FOV raycasts
 		// TODO: Entity::raycasts (std::Array<float, N>)
 		// TODO: Entity::update_raycasts()
-	
-	// 3. Run Network prediction (entity "decides" acceleration)
+		
+		// 3. Run Network prediction (entity "decides" acceleration)
 		// DONE: install libtorch
 		// DONE: copy model.py into cpp
 		// DONE: Vec2 Entity::query_model()
 		// TEST: update velocity from acceleration
-	for (Entity* e : this->entities) {
-		e->acceleration = e->query_model();
-		e->velocity += e->acceleration;
-	}
-	
-	// 4. Update positions
+		for (Entity* e : this->entities) {
+			e->acceleration = e->query_model();
+			e->update_velocity();
+		}
+		
+		// 4. Update positions
 		// TODO: void EntityMap::update_positions()
-	// example code for testing
-	for (Entity* e : this->entities) {
-		e->x += e->velocity.x;
-		e->y += e->velocity.y;
-	}
-
+		// example code for testing
+		for (Entity* e : this->entities) {
+			e->x += e->velocity.x;
+			e->y += e->velocity.y;
+		}
+		this->update_collision_grid();
+		
 }
 
 void EntityMap::update_collision_grid() {
@@ -147,11 +152,14 @@ void EntityMap::check_collisions() {
 			for (int j = i+1; j < v.size(); j++) {
 				Entity* e2 = v.at(j);
 				// Let e1 be the larger
-				if (e2->size >= e1->size) { Entity* temp = e2; e2 = e1; e1 = temp; }
+				if (e2->size >= e1->size) {
+					std::swap(e1, e2);
+				}
 				// check for eating
 				if (e1->size >= e2->size * 1.5) {
-					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size)
+					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
 						handle_eat(e1, e2);
+					}
 				}
 				// check for entity collisions
 				if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
@@ -202,4 +210,18 @@ void EntityMap::handle_eat(Entity* e1, Entity* e2) {
 	e1->velocity = Vec2(0, 0);
 	delete e2;
 	e2 = nullptr;
+}
+
+void EntityMap::compress_entities() {
+	size_t top = this->entities.size()-1;
+	size_t i = 0;
+	while (i < top) {
+		if (entities[i] == nullptr) {
+			std::swap(entities[i], entities[top]);
+			top--;
+		}
+		while (entities[top] == nullptr) top--;
+		i++;
+	}
+	this->entities.resize(top+1);
 }

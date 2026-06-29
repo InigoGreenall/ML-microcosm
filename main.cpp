@@ -30,7 +30,7 @@ int main() {
 
 
         request_new_frame(state);
-        usleep(100000);
+        usleep(1000*1000);
     }
     return 0;
 }
