@@ -93,7 +93,13 @@ void Entity::update_velocity() {
 
 Vec2 Entity::query_model() {
 	std::vector<float> result = model.make_prediction({(float)x, (float)y, (float)size, max_accel, energy_capacity, velocity.x, velocity.y});
-	return Vec2(result[0], result[1]);
+	Vec2 accel = Vec2(result[0], result[1]);
+	if (accel.length() > this->max_accel) {
+		return accel.normalise() * max_accel;
+	}
+	else {
+		return accel;
+	}
 }
 
 
@@ -141,7 +147,8 @@ void EntityMap::update_collision_grid() {
 	}
 
 	for(Entity* e : entities) {
-		collision_grid.at((e->x / 8)+10*(e->y / 8)).push_back(e);
+		// collision_grid.at((e->x / 8)+10*(e->y / 8)).push_back(e);
+		collision_grid.at((int)(e->x / 10) + (int)(e->y / 10)).push_back(e);
 	}
 }
 
