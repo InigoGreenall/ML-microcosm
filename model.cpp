@@ -1,4 +1,5 @@
 #include "model.hpp"
+#include <ATen/ops/leaky_relu.h>
 #include <vector>
 
 Net::Net() : 
@@ -18,13 +19,13 @@ Net::Net(std::vector<int> layer_depths, torch::DeviceType device):
 
 torch::Tensor Net::forward(torch::Tensor x) {
     for (int i = 0; i < layers.size()-1; i++) {
-        x = torch::relu(layers[i]->forward(x));
+        x = torch::leaky_relu(layers[i]->forward(x));
     }
     x = layers[layers.size()-1]->forward(x);
     return x;
 }
 
-std::vector<float> Net::make_prediction(std::vector<float> input) {
+std::vector<float> Net::get_prediction(std::vector<float> input) {
     torch::Tensor t_input = torch::tensor(input).clone().to(device);
     torch::Tensor t_output = forward(t_input);
     return std::vector<float>(

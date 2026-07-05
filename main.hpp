@@ -6,8 +6,8 @@
 
 #define TPS 2
 
-#define WIDTH 400
-#define HEIGHT 400
+#define WIDTH 512
+#define HEIGHT 512
 #define MAX_ENTITIES 65536
 
 #endif // MAIN_HPP

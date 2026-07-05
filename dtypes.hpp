@@ -58,7 +58,7 @@ class EntityMap {
         void check_collisions();
         void handle_collision(Entity* e1, Entity* e2);
         void handle_eat(Entity* e1, Entity* e2);
-        void compress_entities();
+        void compress_entity_list();
 };
 
 #endif

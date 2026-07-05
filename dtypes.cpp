@@ -1,8 +1,12 @@
 #include "main.hpp"
 #include "dtypes.hpp"
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <utility>
 #include <vector>
 
@@ -92,7 +96,7 @@ void Entity::update_velocity() {
 }
 
 Vec2 Entity::query_model() {
-	std::vector<float> result = model.make_prediction({(float)x, (float)y, (float)size, max_accel, energy_capacity, velocity.x, velocity.y});
+	std::vector<float> result = model.get_prediction({(float)x, (float)y, (float)size, max_accel, energy_capacity, velocity.x, velocity.y});
 	Vec2 accel = Vec2(result[0], result[1]);
 	if (accel.length() > this->max_accel) {
 		return accel.normalise() * max_accel;
@@ -109,68 +113,83 @@ EntityMap::EntityMap() {}
 
 
 void EntityMap::do_tick() {
+	
+	// 2. Update FOV raycasts
+	// TODO: Entity::raycasts (std::Array<float, N>)
+	// TODO: Entity::update_raycasts()
+	
+	// 3. Run Network prediction (entity "decides" acceleration)
+	// DONE: install libtorch
+	// DONE: copy model.py into cpp
+	// DONE: Vec2 Entity::query_model()
+	// TEST: update velocity from acceleration
+	for (Entity* e : this->entities) {
+		e->acceleration = e->query_model() * ((float)1/2);
+		e->update_velocity();
+	}
+	
+	// 4. Update positions
+	for (Entity* e : this->entities) {
+		e->x += e->velocity.x;
+		e->y += e->velocity.y;
+	}
+	this->update_collision_grid();
+	
 	// 1. Handle Collisions
-		// TEST: Boundary collisions
-		// TEST: Handle eating
-		this->check_collisions();
-		
-		this->compress_entities();
-
-		// 2. Update FOV raycasts
-		// TODO: Entity::raycasts (std::Array<float, N>)
-		// TODO: Entity::update_raycasts()
-		
-		// 3. Run Network prediction (entity "decides" acceleration)
-		// DONE: install libtorch
-		// DONE: copy model.py into cpp
-		// DONE: Vec2 Entity::query_model()
-		// TEST: update velocity from acceleration
-		for (Entity* e : this->entities) {
-			e->acceleration = e->query_model();
-			e->update_velocity();
-		}
-		
-		// 4. Update positions
-		// TODO: void EntityMap::update_positions()
-		// example code for testing
-		for (Entity* e : this->entities) {
-			e->x += e->velocity.x;
-			e->y += e->velocity.y;
-		}
-		this->update_collision_grid();
-		
+	// TEST: Boundary collisions
+	// TEST: Handle eating
+	this->check_collisions();
+	this->compress_entity_list();
 }
 
+uint8_t num_height_divisions = 8;
+uint8_t num_width_divisions = 8;
 void EntityMap::update_collision_grid() {
 	for (std::vector<Entity*>& v : collision_grid) {
 		v.clear();
 	}
-
+	
 	for(Entity* e : entities) {
-		// collision_grid.at((e->x / 8)+10*(e->y / 8)).push_back(e);
-		collision_grid.at((int)(e->x / 10) + (int)(e->y / 10)).push_back(e);
+		// collision_grid.at(((float)e->x / WIDTH * 8) + 8 * ((float)e->y / HEIGHT * 8)).push_back(e);
+		uint8_t grid_x = std::floor(num_width_divisions * ((float)e->x / WIDTH));
+		uint8_t grid_y = std::floor(num_height_divisions * ((float)e->y / HEIGHT));
+		std::cout << "grid_x: " << (int)grid_x << ", grid_y: " << (int)grid_y << "\n";
+		assert(grid_x < num_width_divisions && "grid_x exceeds width divisions");
+		assert(grid_y < num_height_divisions && "grid_y exceeds height divisions");
+		collision_grid[grid_x + num_width_divisions * grid_y].push_back(e);
 	}
 }
 
 void EntityMap::check_collisions() {
+	uint8_t delete_flag[entities.size()];
+	std::memset(delete_flag, 0, entities.size());
 	for (std::vector<Entity*>& v : collision_grid) {
 		for (int i = 0; i < v.size(); i++) {
 			Entity* e1 = v.at(i);
 			for (int j = i+1; j < v.size(); j++) {
 				Entity* e2 = v.at(j);
-				// Let e1 be the larger
-				if (e2->size >= e1->size) {
-					std::swap(e1, e2);
-				}
 				// check for eating
-				if (e1->size >= e2->size * 1.5) {
+				if (e1->size >= e2->size * 1.5) { // e1 is larger
 					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
-						handle_eat(e1, e2);
+						if (!delete_flag[i]) {
+							handle_eat(e2, e1);
+							delete_flag[i] = true;
+						}
+					}
+				}
+				else if (e2->size >= e1->size * 1.5) { // e2 is larger
+					if (Vec2(e2->x, e2->y).distance(Vec2(e1->x, e1->y)) <= e2->size) {
+						if (!delete_flag[i]) {
+							handle_eat(e2, e1);
+							delete_flag[i] = true;
+						}
 					}
 				}
 				// check for entity collisions
-				if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
-					handle_collision(e1, e2);
+				else if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
+					if (!delete_flag[i] && !delete_flag[j]) {
+						handle_collision(e1, e2);
+					}
 				}
 			}
 			// check for boundary collisions & apply fully elastic bounce
@@ -210,16 +229,18 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 
 // Apply the effect of e1 "eating" e2
 void EntityMap::handle_eat(Entity* e1, Entity* e2) {
-
-	// TODO: do we have to deallocate the Entity e2?
-
 	e1->size += e2->size/2;
 	e1->velocity = Vec2(0, 0);
-	delete e2;
-	e2 = nullptr;
+	for (int i = 0; i < entities.size(); i++) {
+		if (this->entities[i] == e2) {
+			this->entities.erase(this->entities.begin() + i);
+			delete e2;
+			break;
+		}
+	}
 }
 
-void EntityMap::compress_entities() {
+void EntityMap::compress_entity_list() {
 	size_t top = this->entities.size()-1;
 	size_t i = 0;
 	while (i < top) {

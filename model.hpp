@@ -12,6 +12,6 @@ class Net : public torch::nn::Module {
     Net();
     Net(std::vector<int> layer_depths, torch::DeviceType device);
 
-    std::vector<float> make_prediction(std::vector<float> input);
+    std::vector<float> get_prediction(std::vector<float> input);
 };
 #endif // MODEL_HPP
