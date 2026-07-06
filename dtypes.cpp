@@ -139,7 +139,6 @@ void EntityMap::do_tick() {
 	// TEST: Boundary collisions
 	// TEST: Handle eating
 	this->check_collisions();
-	this->compress_entity_list();
 }
 
 uint8_t num_height_divisions = 8;
@@ -151,8 +150,9 @@ void EntityMap::update_collision_grid() {
 	
 	for(Entity* e : entities) {
 		// collision_grid.at(((float)e->x / WIDTH * 8) + 8 * ((float)e->y / HEIGHT * 8)).push_back(e);
-		uint8_t grid_x = std::floor(num_width_divisions * ((float)e->x / WIDTH));
-		uint8_t grid_y = std::floor(num_height_divisions * ((float)e->y / HEIGHT));
+		uint8_t grid_x = std::floor(num_width_divisions * ((float)e->x / (WIDTH+1)));
+		uint8_t grid_y = std::floor(num_height_divisions * ((float)e->y / (HEIGHT+1)));
+		std::cout << "entity x: " << e->x << ", entity y: " << e->y << "\n";
 		std::cout << "grid_x: " << (int)grid_x << ", grid_y: " << (int)grid_y << "\n";
 		assert(grid_x < num_width_divisions && "grid_x exceeds width divisions");
 		assert(grid_y < num_height_divisions && "grid_y exceeds height divisions");
@@ -171,9 +171,9 @@ void EntityMap::check_collisions() {
 				// check for eating
 				if (e1->size >= e2->size * 1.5) { // e1 is larger
 					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
-						if (!delete_flag[i]) {
-							handle_eat(e2, e1);
-							delete_flag[i] = true;
+						if (!delete_flag[j]) {
+							handle_eat(e1, e2);
+							delete_flag[j] = true;
 						}
 					}
 				}
@@ -193,12 +193,30 @@ void EntityMap::check_collisions() {
 				}
 			}
 			// check for boundary collisions & apply fully elastic bounce
-			if (e1->x + e1->size > WIDTH || e1->x - e1->size < 0) {
+			if (e1->x + e1->size > WIDTH) {
 				e1->velocity.x = -e1->velocity.x;
+				e1->x = WIDTH - e1->size;
 			}
-			if (e1->y + e1->size > HEIGHT || e1->y - e1->size < 0) {
-				e1->velocity.y = -e1->velocity.y;;
+			else if (e1->x - e1->size < 0) {
+				e1->velocity.x = -e1->velocity.x;
+				e1->x = e1->size;
 			}
+			if (e1->y + e1->size > HEIGHT) {
+				e1->velocity.y = -e1->velocity.y;
+				e1->y = HEIGHT - e1->size;
+			}
+			else if (e1->y - e1->size < 0) {
+				e1->velocity.y = -e1->velocity.y;
+				e1->y = e1->size;
+			}
+		}
+	}
+	for (int i = 0; i < entities.size(); i++) {
+		if (delete_flag[i]) {
+			delete entities[i];
+			entities.erase(entities.begin() + i);
+			delete_flag[i] = false;
+			i--;
 		}
 	}
 }
@@ -230,26 +248,5 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 // Apply the effect of e1 "eating" e2
 void EntityMap::handle_eat(Entity* e1, Entity* e2) {
 	e1->size += e2->size/2;
-	e1->velocity = Vec2(0, 0);
-	for (int i = 0; i < entities.size(); i++) {
-		if (this->entities[i] == e2) {
-			this->entities.erase(this->entities.begin() + i);
-			delete e2;
-			break;
-		}
-	}
-}
-
-void EntityMap::compress_entity_list() {
-	size_t top = this->entities.size()-1;
-	size_t i = 0;
-	while (i < top) {
-		if (entities[i] == nullptr) {
-			std::swap(entities[i], entities[top]);
-			top--;
-		}
-		while (entities[top] == nullptr) top--;
-		i++;
-	}
-	this->entities.resize(top+1);
+	e1->velocity = Vec2(0, 0); // TODO: make this more realistic
 }
