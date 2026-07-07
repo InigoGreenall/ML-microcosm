@@ -5,7 +5,6 @@ project(ML-microcosm)
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
-
 # file(DOWNLOAD https://github.com/s7electric/wl-client/raw/refs/heads/main/libwlclient.a testing-include/libwlclient.a STATUS status)
 # file(DOWNLOAD https://github.com/s7electric/wl-client/raw/refs/heads/main/wlclient.h testing-include/wlclient.h STATUS status)
 execute_process(COMMAND wget https://github.com/s7electric/wl-client/raw/refs/heads/main/libwlclient.a -O ${PROJECT_SOURCE_DIR}/testing-include/libwlclient.a)

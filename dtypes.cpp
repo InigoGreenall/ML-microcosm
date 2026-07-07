@@ -113,22 +113,17 @@ EntityMap::EntityMap() {}
 
 
 void EntityMap::do_tick() {
-	
-	// 2. Update FOV raycasts
+	// 1. Update FOV raycasts
 	// TODO: Entity::raycasts (std::Array<float, N>)
 	// TODO: Entity::update_raycasts()
 	
-	// 3. Run Network prediction (entity "decides" acceleration)
-	// DONE: install libtorch
-	// DONE: copy model.py into cpp
-	// DONE: Vec2 Entity::query_model()
-	// TEST: update velocity from acceleration
+	// 2. Run Network prediction (entity "decides" acceleration)
 	for (Entity* e : this->entities) {
 		e->acceleration = e->query_model() * ((float)1/2);
 		e->update_velocity();
 	}
 	
-	// 4. Update positions
+	// 3. Update positions
 	for (Entity* e : this->entities) {
 		e->x += e->velocity.x;
 		e->y += e->velocity.y;
@@ -136,9 +131,7 @@ void EntityMap::do_tick() {
 	}	
 	this->update_collision_grid();
 	
-	// 1. Handle Collisions
-	// TEST: Boundary collisions
-	// TEST: Handle eating
+	// 4. Handle Collisions
 	this->check_collisions();
 	this->update_collision_grid();
 }
@@ -154,8 +147,6 @@ void EntityMap::update_collision_grid() {
 		// collision_grid.at(((float)e->x / WIDTH * 8) + 8 * ((float)e->y / HEIGHT * 8)).push_back(e);
 		uint8_t grid_x = std::floor(num_width_divisions * ((float)e->x / (WIDTH+1)));
 		uint8_t grid_y = std::floor(num_height_divisions * ((float)e->y / (HEIGHT+1)));
-		std::cout << "entity x: " << e->x << ", entity y: " << e->y << "\n";
-		std::cout << "grid_x: " << (int)grid_x << ", grid_y: " << (int)grid_y << "\n";
 		assert(grid_x < num_width_divisions && "grid_x exceeds width divisions");
 		assert(grid_y < num_height_divisions && "grid_y exceeds height divisions");
 		collision_grid[grid_x + num_width_divisions * grid_y].push_back(e);
@@ -199,7 +190,8 @@ void EntityMap::check_collisions() {
 			check_and_fix_boundary_collisions(e1);
 		}
 	}
-	std::vector<Entity*>* new_list = new std::vector<Entity*>;
+	// sweep entities flagged for deletion -- creates new entity vector
+	std::vector<Entity*>* new_list;
 	for (int i = 0; i < entities.size(); i++) {
 		if (delete_flag[i]) {
 			delete entities[i];
@@ -209,6 +201,8 @@ void EntityMap::check_collisions() {
 		}
 	}
 	this->entities = *new_list;
+	delete new_list;
+	
 }
 void EntityMap::handle_collision(Entity* e1, Entity* e2) {	
 	// find normal vector between the entities
