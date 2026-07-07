@@ -3,7 +3,6 @@
 #include "model.hpp"
 #include "softwarerender.hpp"
 #include <unistd.h>
-
 extern "C" {
     #include "testing-include/wlclient.h"
 }

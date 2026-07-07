@@ -132,13 +132,15 @@ void EntityMap::do_tick() {
 	for (Entity* e : this->entities) {
 		e->x += e->velocity.x;
 		e->y += e->velocity.y;
-	}
+		this->check_and_fix_boundary_collisions(e);
+	}	
 	this->update_collision_grid();
 	
 	// 1. Handle Collisions
 	// TEST: Boundary collisions
 	// TEST: Handle eating
 	this->check_collisions();
+	this->update_collision_grid();
 }
 
 uint8_t num_height_divisions = 8;
@@ -166,59 +168,47 @@ void EntityMap::check_collisions() {
 	for (std::vector<Entity*>& v : collision_grid) {
 		for (int i = 0; i < v.size(); i++) {
 			Entity* e1 = v.at(i);
+			int e1_index = std::find(entities.begin(), entities.end(), e1) - entities.begin();
 			for (int j = i+1; j < v.size(); j++) {
 				Entity* e2 = v.at(j);
+				int e2_index = std::find(entities.begin(), entities.end(), e2) - entities.begin();
 				// check for eating
-				if (e1->size >= e2->size * 1.5) { // e1 is larger
+				if (e1->size >= e2->size * 1.3) { // e1 is larger
 					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
-						if (!delete_flag[j]) {
-							handle_eat(e1, e2);
-							delete_flag[j] = true;
+						if (!delete_flag[e2_index]) {
+							e1->size += e2->size/4;
+							delete_flag[e2_index] = true;
 						}
 					}
 				}
-				else if (e2->size >= e1->size * 1.5) { // e2 is larger
+				else if (e2->size >= e1->size * 1.3) { // e2 is larger
 					if (Vec2(e2->x, e2->y).distance(Vec2(e1->x, e1->y)) <= e2->size) {
-						if (!delete_flag[i]) {
-							handle_eat(e2, e1);
-							delete_flag[i] = true;
+						if (!delete_flag[e1_index]) {
+							e2->size += e1->size/4;
+							delete_flag[e1_index] = true;
 						}
 					}
 				}
 				// check for entity collisions
 				else if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
-					if (!delete_flag[i] && !delete_flag[j]) {
+					if (!delete_flag[e1_index] && !delete_flag[e2_index]) {
 						handle_collision(e1, e2);
 					}
 				}
 			}
-			// check for boundary collisions & apply fully elastic bounce
-			if (e1->x + e1->size > WIDTH) {
-				e1->velocity.x = -e1->velocity.x;
-				e1->x = WIDTH - e1->size;
-			}
-			else if (e1->x - e1->size < 0) {
-				e1->velocity.x = -e1->velocity.x;
-				e1->x = e1->size;
-			}
-			if (e1->y + e1->size > HEIGHT) {
-				e1->velocity.y = -e1->velocity.y;
-				e1->y = HEIGHT - e1->size;
-			}
-			else if (e1->y - e1->size < 0) {
-				e1->velocity.y = -e1->velocity.y;
-				e1->y = e1->size;
-			}
+			check_and_fix_boundary_collisions(e1);
 		}
 	}
+	std::vector<Entity*>* new_list = new std::vector<Entity*>;
 	for (int i = 0; i < entities.size(); i++) {
 		if (delete_flag[i]) {
 			delete entities[i];
-			entities.erase(entities.begin() + i);
-			delete_flag[i] = false;
-			i--;
+		}
+		else {
+			new_list->push_back(entities[i]);
 		}
 	}
+	this->entities = *new_list;
 }
 void EntityMap::handle_collision(Entity* e1, Entity* e2) {	
 	// find normal vector between the entities
@@ -245,8 +235,25 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 	e2->velocity += I * (-1.0/e2->size);
 }
 
-// Apply the effect of e1 "eating" e2
-void EntityMap::handle_eat(Entity* e1, Entity* e2) {
-	e1->size += e2->size/2;
-	e1->velocity = Vec2(0, 0); // TODO: make this more realistic
+/*  Apply fully elastic bounce entities colliding with the boundary; otherwise is a no-op.
+	Postcondition: entity e is within the boundaries of the simulation.
+*/
+void EntityMap::check_and_fix_boundary_collisions(Entity* e) {
+	// check for boundary collisions & apply fully elastic bounce
+	if (e->x + e->size > WIDTH) {
+		e->velocity.x = -e->velocity.x;
+		e->x = WIDTH - e->size;
+	}
+	else if (e->x - e->size < 0) {
+		e->velocity.x = -e->velocity.x;
+		e->x = e->size;
+	}
+	if (e->y + e->size > HEIGHT) {
+		e->velocity.y = -e->velocity.y;
+		e->y = HEIGHT - e->size;
+	}
+	else if (e->y - e->size < 0) {
+		e->velocity.y = -e->velocity.y;
+		e->y = e->size;
+	}
 }

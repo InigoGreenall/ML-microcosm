@@ -55,9 +55,10 @@ class EntityMap {
 
         void do_tick();
         void update_collision_grid();
+        void update_positions();
         void check_collisions();
+        void check_and_fix_boundary_collisions(Entity* e);
         void handle_collision(Entity* e1, Entity* e2);
-        void handle_eat(Entity* e1, Entity* e2);
 };
 
 #endif
