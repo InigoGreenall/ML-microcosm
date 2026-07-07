@@ -191,19 +191,18 @@ void EntityMap::check_collisions() {
 		}
 	}
 	// sweep entities flagged for deletion -- creates new entity vector
-	std::vector<Entity*>* new_list;
+	std::vector<Entity*> new_list;
 	for (int i = 0; i < entities.size(); i++) {
 		if (delete_flag[i]) {
 			delete entities[i];
 		}
 		else {
-			new_list->push_back(entities[i]);
+			new_list.push_back(entities[i]);
 		}
 	}
-	this->entities = *new_list;
-	delete new_list;
-	
+	this->entities = new_list;
 }
+
 void EntityMap::handle_collision(Entity* e1, Entity* e2) {	
 	// find normal vector between the entities
 	Vec2 d(e2->x - e1->x, e2->y - e1->y);
