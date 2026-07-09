@@ -3,10 +3,11 @@
 #include "model.hpp"
 #include "softwarerender.hpp"
 #include <unistd.h>
-
 extern "C" {
     #include "testing-include/wlclient.h"
 }
+
+static const torch::DeviceType DEVICE_LOOKUP[] = {torch::kCPU, torch::kCUDA};
 
 EntityMap* entity_map;
 
@@ -17,19 +18,40 @@ int main() {
     // TODO: do program setup
     entity_map = new EntityMap;
     entity_map->entities.push_back(
-        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2}, torch::kCUDA))
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    // entity_map->entities.push_back(
+    //     new Entity(WIDTH/3, HEIGHT/3, 20, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    // );
+    // entity_map->entities.push_back(
+    //     new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    // );
+    // entity_map->entities.push_back(
+    //     new Entity(WIDTH/5, HEIGHT/5, 5, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    // );
+
 
     while (dispatch_events(state)) {
 
         // TODO: event loop
+        entity_map->do_tick();
 
-        Vec2 out = entity_map->entities[0]->query_model();
-        entity_map->entities[0]->x += out.x;
-        entity_map->entities[0]->x += out.y;
+
 
         request_new_frame(state);
-        sleep(1);
+        usleep(50*1000);
     }
     return 0;
 }

@@ -1,8 +1,17 @@
 #include "main.hpp"
 #include "dtypes.hpp"
+#include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <utility>
 #include <vector>
 
+//###################################################
+// Vec2
 Vec2::Vec2(float x, float y) :
 	x(x),
 	y(y)
@@ -31,6 +40,10 @@ float Vec2::length() const {
 	return std::sqrt(x*x + y*y);
 }
 
+float Vec2::distance(Vec2 v) {
+	return std::sqrt((x-v.x)*(x-v.x) + (y-v.y)*(y-v.y));
+}
+
 Vec2 Vec2::normalise() const {
 	float mag = length();
 
@@ -39,7 +52,6 @@ Vec2 Vec2::normalise() const {
 	} else {
 		return Vec2(x/mag, y/mag);
 	}
-
 }
 
 //######################################################
@@ -84,8 +96,14 @@ void Entity::update_velocity() {
 }
 
 Vec2 Entity::query_model() {
-	std::vector<float> result = model.make_prediction({(float)x, (float)y, (float)size, max_accel, energy_capacity, velocity.x, velocity.y});
-	return Vec2(result[0], result[1]);
+	std::vector<float> result = model.get_prediction({(float)x, (float)y, (float)size, max_accel, energy_capacity, velocity.x, velocity.y});
+	Vec2 accel = Vec2(result[0], result[1]);
+	if (accel.length() > this->max_accel) {
+		return accel.normalise() * max_accel;
+	}
+	else {
+		return accel;
+	}
 }
 
 
@@ -95,53 +113,95 @@ EntityMap::EntityMap() {}
 
 
 void EntityMap::do_tick() {
-	// 1. Handle Collisions
-		// TODO: Boundary collisions
-		// TODO: Handle eating
-
-	// 2. Update FOV raycasts
-		// TODO: Entity::raycasts (std::Array<float, N>)
-		// TODO: Entity::update_raycasts()
+	// 1. Update FOV raycasts
+	// TODO: Entity::raycasts (std::Array<float, N>)
+	// TODO: Entity::update_raycasts()
 	
-	// 3. Run ML Nets (generate "acceleration")
-		// DONE: install libtorch
-		// DONE: copy model.py into cpp
-		// DONE: Vec2 Entity::query_model()
+	// 2. Run Network prediction (entity "decides" acceleration)
+	for (Entity* e : this->entities) {
+		e->acceleration = e->query_model() * ((float)1/2);
+		e->update_velocity();
+	}
 	
-	// 4. Update values from Nets
-		// a. update velocity based on acceleration
-
-		// TODO: 
+	// 3. Update positions
+	for (Entity* e : this->entities) {
+		e->x += e->velocity.x;
+		e->y += e->velocity.y;
+		this->check_and_fix_boundary_collisions(e);
+	}	
 	
-	// 5. Update positions
-		// TODO: void EntityMap::update_positions()
-
+	// 4. Handle Collisions
+	this->update_collision_grid();
+	this->check_collisions();
 }
 
+uint8_t num_height_divisions = 8;
+uint8_t num_width_divisions = 8;
 void EntityMap::update_collision_grid() {
 	for (std::vector<Entity*>& v : collision_grid) {
 		v.clear();
 	}
-
+	
 	for(Entity* e : entities) {
-		collision_grid.at((e->x / 8)+10*(e->y / 8)).push_back(e);
+		// collision_grid.at(((float)e->x / WIDTH * 8) + 8 * ((float)e->y / HEIGHT * 8)).push_back(e);
+		uint8_t grid_x = std::floor(num_width_divisions * ((float)e->x / (WIDTH+1)));
+		uint8_t grid_y = std::floor(num_height_divisions * ((float)e->y / (HEIGHT+1)));
+		assert(grid_x < num_width_divisions && "grid_x exceeds width divisions");
+		assert(grid_y < num_height_divisions && "grid_y exceeds height divisions");
+		collision_grid[grid_x + num_width_divisions * grid_y].push_back(e);
 	}
 }
 
 void EntityMap::check_collisions() {
+	uint8_t delete_flag[entities.size()];
+	std::memset(delete_flag, 0, entities.size());
 	for (std::vector<Entity*>& v : collision_grid) {
 		for (int i = 0; i < v.size(); i++) {
+			Entity* e1 = v.at(i);
+			int e1_index = std::find(entities.begin(), entities.end(), e1) - entities.begin();
 			for (int j = i+1; j < v.size(); j++) {
-				Entity* e1 = v.at(i);
 				Entity* e2 = v.at(j);
-
-				if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
-					handle_collision(e1, e2);
+				int e2_index = std::find(entities.begin(), entities.end(), e2) - entities.begin();
+				// check for eating
+				if (e1->size >= e2->size * 1.3) { // e1 is larger
+					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
+						if (!delete_flag[e2_index]) {
+							e1->size += e2->size/4;
+							delete_flag[e2_index] = true;
+						}
+					}
+				}
+				else if (e2->size >= e1->size * 1.3) { // e2 is larger
+					if (Vec2(e2->x, e2->y).distance(Vec2(e1->x, e1->y)) <= e2->size) {
+						if (!delete_flag[e1_index]) {
+							e2->size += e1->size/4;
+							delete_flag[e1_index] = true;
+						}
+					}
+				}
+				// check for entity collisions
+				else if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
+					if (!delete_flag[e1_index] && !delete_flag[e2_index]) {
+						handle_collision(e1, e2);
+					}
 				}
 			}
 		}
 	}
+	// sweep entities flagged for deletion -- creates new entity vector
+	std::vector<Entity*> new_list;
+	for (int i = 0; i < entities.size(); i++) {
+		if (delete_flag[i]) {
+			delete entities[i];
+		}
+		else {
+			new_list.push_back(entities[i]);
+		}
+	}
+	this->entities = new_list;
 }
+
+/*	Handle a bounce elastic collision between two entities. */
 void EntityMap::handle_collision(Entity* e1, Entity* e2) {	
 	// find normal vector between the entities
 	Vec2 d(e2->x - e1->x, e2->y - e1->y);
@@ -158,11 +218,34 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 
 	// impulse
 	// -(1 + restitution)*vel_norm; resititution is 1 for elastic collision
-	float j = -2*vel_norm / (1.0/e1->size + 1.0/e2->size);
+	float j = -1.5*vel_norm / (1.0/e1->size + 1.0/e2->size);
 
 	Vec2 I = normal * j;
 
 	//theres some complicated signage here so if it completely breaks after a single collision, this will be why.
-	e1->velocity += I * (1.0/e1->size);
-	e2->velocity += I * (-1.0/e2->size);
+	e1->velocity += I * (-1.0/e1->size);
+	e2->velocity += I * (1.0/e2->size);
+}
+
+/*  Apply fully elastic bounce entities colliding with the boundary; otherwise is a no-op.
+	Postcondition: entity e is within the boundaries of the simulation.
+*/
+void EntityMap::check_and_fix_boundary_collisions(Entity* e) {
+	// check for boundary collisions & apply fully elastic bounce
+	if (e->x + e->size > WIDTH) {
+		e->velocity.x = -e->velocity.x;
+		e->x = WIDTH - e->size;
+	}
+	else if (e->x - e->size < 0) {
+		e->velocity.x = -e->velocity.x;
+		e->x = e->size;
+	}
+	if (e->y + e->size > HEIGHT) {
+		e->velocity.y = -e->velocity.y;
+		e->y = HEIGHT - e->size;
+	}
+	else if (e->y - e->size < 0) {
+		e->velocity.y = -e->velocity.y;
+		e->y = e->size;
+	}
 }
