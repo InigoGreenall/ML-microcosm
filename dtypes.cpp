@@ -129,11 +129,10 @@ void EntityMap::do_tick() {
 		e->y += e->velocity.y;
 		this->check_and_fix_boundary_collisions(e);
 	}	
-	this->update_collision_grid();
 	
 	// 4. Handle Collisions
-	this->check_collisions();
 	this->update_collision_grid();
+	this->check_collisions();
 }
 
 uint8_t num_height_divisions = 8;
@@ -187,7 +186,6 @@ void EntityMap::check_collisions() {
 					}
 				}
 			}
-			check_and_fix_boundary_collisions(e1);
 		}
 	}
 	// sweep entities flagged for deletion -- creates new entity vector
@@ -203,6 +201,7 @@ void EntityMap::check_collisions() {
 	this->entities = new_list;
 }
 
+/*	Handle a bounce elastic collision between two entities. */
 void EntityMap::handle_collision(Entity* e1, Entity* e2) {	
 	// find normal vector between the entities
 	Vec2 d(e2->x - e1->x, e2->y - e1->y);
@@ -219,13 +218,13 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 
 	// impulse
 	// -(1 + restitution)*vel_norm; resititution is 1 for elastic collision
-	float j = -2*vel_norm / (1.0/e1->size + 1.0/e2->size);
+	float j = -1.5*vel_norm / (1.0/e1->size + 1.0/e2->size);
 
 	Vec2 I = normal * j;
 
 	//theres some complicated signage here so if it completely breaks after a single collision, this will be why.
-	e1->velocity += I * (1.0/e1->size);
-	e2->velocity += I * (-1.0/e2->size);
+	e1->velocity += I * (-1.0/e1->size);
+	e2->velocity += I * (1.0/e2->size);
 }
 
 /*  Apply fully elastic bounce entities colliding with the boundary; otherwise is a no-op.

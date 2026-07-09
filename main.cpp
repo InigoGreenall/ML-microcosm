@@ -21,14 +21,26 @@ int main() {
         new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/3, HEIGHT/3, 20, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/5, HEIGHT/5, 5, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    // entity_map->entities.push_back(
+    //     new Entity(WIDTH/3, HEIGHT/3, 20, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    // );
+    // entity_map->entities.push_back(
+    //     new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    // );
+    // entity_map->entities.push_back(
+    //     new Entity(WIDTH/5, HEIGHT/5, 5, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    // );
 
 
     while (dispatch_events(state)) {
