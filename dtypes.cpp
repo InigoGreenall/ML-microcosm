@@ -3,11 +3,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <utility>
 #include <vector>
 
 //###################################################
@@ -113,6 +111,10 @@ EntityMap::EntityMap() {}
 
 
 void EntityMap::do_tick() {
+
+	// 1 (real). spawn food blobs
+	spawn_food_blobs();
+
 	// 1. Update FOV raycasts
 	// TODO: Entity::raycasts (std::Array<float, N>)
 	// TODO: Entity::update_raycasts()
@@ -159,10 +161,24 @@ void EntityMap::check_collisions() {
 		for (int i = 0; i < v.size(); i++) {
 			Entity* e1 = v.at(i);
 			int e1_index = std::find(entities.begin(), entities.end(), e1) - entities.begin();
+			/* Check for food blob eating */
+			int left_x = std::max(0, e1->x - e1->size);
+			int right_x = std::min(WIDTH-1, e1->x + e1->size);
+			int upper_y = std::max(0, e1->y - e1->size);
+			int bottom_y = std::min(HEIGHT-1, e1->y + e1->size);
+			for (int x = left_x; x <= right_x; x++) {
+				for (int y = upper_y; y <= bottom_y; y++) {
+					if (this->food_blobs[x][y] > 0 && Vec2(e1->x, e1->y).distance(Vec2(x,y)) < e1->size) {
+						e1->size += this->food_blobs[x][y];
+						this->food_blobs[x][y] = 0;
+						this->food_blob_count--;
+					}
+				} 
+			}
 			for (int j = i+1; j < v.size(); j++) {
 				Entity* e2 = v.at(j);
 				int e2_index = std::find(entities.begin(), entities.end(), e2) - entities.begin();
-				// check for eating
+				/* Check for entity eating */
 				if (e1->size >= e2->size * 1.3) { // e1 is larger
 					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
 						if (!delete_flag[e2_index]) {
@@ -179,7 +195,7 @@ void EntityMap::check_collisions() {
 						}
 					}
 				}
-				// check for entity collisions
+				/* Check for entity collisions */
 				else if (std::abs(e1->x - e2->x) < (e1->size + e2->size) && std::abs(e1->y - e2->y) < (e1->size + e2->size)) {
 					if (!delete_flag[e1_index] && !delete_flag[e2_index]) {
 						handle_collision(e1, e2);
@@ -247,5 +263,16 @@ void EntityMap::check_and_fix_boundary_collisions(Entity* e) {
 	else if (e->y - e->size < 0) {
 		e->velocity.y = -e->velocity.y;
 		e->y = e->size;
+	}
+}
+/*	Spawn food blobs randomly throughout the simulation. */
+void EntityMap::spawn_food_blobs() {
+	int spawn_count = std::min(FOOD_BLOB_SPAWN_RATE, FOOD_BLOB_MAX - this->food_blob_count);
+	for (int i = 0; i < spawn_count; i++) {
+		int x = std::rand() % WIDTH;
+		int y = std::rand() % HEIGHT;
+		int energy = std::rand() % 4; // random energy value between 0 and 3
+		this->food_blobs[y][x] = energy;
+		this->food_blob_count++;
 	}
 }
