@@ -2,12 +2,14 @@
 ## About
 
 ## Build Instructions
-`$ git clone https://github.com/InigoGreenall/ML-microcosm`
+```
+$ git clone https://github.com/InigoGreenall/ML-microcosm
 
-`$ cd ML-microcosm`
+$ cd ML-microcosm
 
-`$ mkdir build && cd build`
+$ mkdir build && cd build
 
-`$ cmake ..`
+$ cmake ..
 
-`$ make`
+$ make
+```
