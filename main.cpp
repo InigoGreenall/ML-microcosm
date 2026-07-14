@@ -18,19 +18,19 @@ int main() {
     // TODO: do program setup
     entity_map = new EntityMap;
     entity_map->entities.push_back(
-        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     entity_map->entities.push_back(
-        new Entity(WIDTH/2, HEIGHT/2, 50, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );
     // entity_map->entities.push_back(
     //     new Entity(WIDTH/3, HEIGHT/3, 20, 1, 1, 1, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
@@ -47,9 +47,6 @@ int main() {
 
         // TODO: event loop
         entity_map->do_tick();
-
-
-
         request_new_frame(state);
         usleep(1000*1000 / TPS);
     }

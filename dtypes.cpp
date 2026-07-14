@@ -168,10 +168,12 @@ void EntityMap::check_collisions() {
 			int bottom_y = std::min(HEIGHT-1, e1->y + e1->size);
 			for (int x = left_x; x <= right_x; x++) {
 				for (int y = upper_y; y <= bottom_y; y++) {
-					if (this->food_blobs[x][y] > 0 && Vec2(e1->x, e1->y).distance(Vec2(x,y)) < e1->size) {
-						e1->size += this->food_blobs[x][y];
-						this->food_blobs[x][y] = 0;
-						this->food_blob_count--;
+					if (this->food_blobs[x][y] > 0) {
+						if (Vec2(e1->x, e1->y).distance(Vec2(x,y)) < e1->size/(float)2) {
+							e1->size += this->food_blobs[x][y];
+							this->food_blobs[x][y] = 0;
+							this->food_blob_count--;
+						}
 					}
 				} 
 			}
@@ -182,7 +184,7 @@ void EntityMap::check_collisions() {
 				if (e1->size >= e2->size * 1.3) { // e1 is larger
 					if (Vec2(e1->x, e1->y).distance(Vec2(e2->x, e2->y)) <= e1->size) {
 						if (!delete_flag[e2_index]) {
-							e1->size += e2->size/4;
+							e1->size += e2->size/8;
 							delete_flag[e2_index] = true;
 						}
 					}
@@ -271,8 +273,7 @@ void EntityMap::spawn_food_blobs() {
 	for (int i = 0; i < spawn_count; i++) {
 		int x = std::rand() % WIDTH;
 		int y = std::rand() % HEIGHT;
-		int energy = std::rand() % 4; // random energy value between 0 and 3
-		this->food_blobs[y][x] = energy;
+		this->food_blobs[x][y] = std::rand() % 4; // random energy value between 0 and 3
 		this->food_blob_count++;
 	}
 }

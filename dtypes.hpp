@@ -1,6 +1,13 @@
 #ifndef DTYPES_HPP
 #define DTYPES_HPP
 
+#define DRAG_COEFF 0.0002159 //0.47 (sphere drag coefficient) * 3/8 * 0.001225 (fluid density)
+
+#define FOOD_BLOB_MAX 1000
+
+// food blob spawn rate per tick
+#define FOOD_BLOB_SPAWN_RATE 1
+
 #include <vector>
 #include <array>
 #include "main.hpp"
