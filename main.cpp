@@ -51,7 +51,7 @@ int main() {
 
 
         request_new_frame(state);
-        usleep(50*1000);
+        usleep(1000*1000 / NUM_TICKS_PER_SEC);
     }
     return 0;
 }

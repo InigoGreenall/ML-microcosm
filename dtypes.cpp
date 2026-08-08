@@ -85,7 +85,8 @@ Entity::Entity() :
 Entity::~Entity() {}
 
 void Entity::update_velocity() {
-	velocity += acceleration;
+	velocity.x += acceleration.x / NUM_TICKS_PER_SEC;
+	velocity.y += acceleration.y / NUM_TICKS_PER_SEC;
 
 	float mag = velocity.length();
 	float drag = pow(mag,2)*DRAG_COEFF/(float)size; // density == 1
@@ -125,8 +126,8 @@ void EntityMap::do_tick() {
 	
 	// 3. Update positions
 	for (Entity* e : this->entities) {
-		e->x += e->velocity.x;
-		e->y += e->velocity.y;
+		e->x += e->velocity.x / NUM_TICKS_PER_SEC;
+		e->y += e->velocity.y / NUM_TICKS_PER_SEC;
 		this->check_and_fix_boundary_collisions(e);
 	}	
 	
