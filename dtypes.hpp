@@ -1,8 +1,11 @@
 #ifndef DTYPES_HPP
 #define DTYPES_HPP
 
-#define DRAG_COEFF 0.0002159 //0.47 (sphere drag coefficient) * 3/8 * 0.001225 (fluid density) 
+// #define DRAG_COEFF 0.0002159 // 0.47 (sphere drag coefficient) * 3/8 * 0.001225 (fluid density) 
+#define DRAG_COEFF 0.0017625 // same formula but replace fluid density with 0.01
+#define RESTITUTION 1 // for collisions
 
+#include <cstdint>
 #include <vector>
 #include <array>
 #include "model.hpp"
@@ -30,13 +33,15 @@ class Entity {
         float fov;
         float max_accel;
         float energy_capacity;
+
+        uint32_t display_colour;
 		
 		Vec2 velocity;
         Vec2 acceleration;
 
         Net model;
 		
-        Entity(int x, int y, int size, float fov, float max_accel, float energy_capacity, Net model);
+        Entity(int x, int y, int size, float fov, float max_accel, float energy_capacity, uint32_t, Net model);
         Entity();
 
         ~Entity();

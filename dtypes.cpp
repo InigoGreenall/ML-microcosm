@@ -3,11 +3,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <utility>
 #include <vector>
 
 //###################################################
@@ -56,13 +54,14 @@ Vec2 Vec2::normalise() const {
 
 //######################################################
 // Entity
-Entity::Entity(int x, int y, int size, float fov, float max_accel, float energy_capacity, Net model) :
+Entity::Entity(int x, int y, int size, float fov, float max_accel, float energy_capacity, uint32_t display_colour, Net model) :
 	x(x),
 	y(y),
 	size(size),
 	fov(fov),
 	max_accel(max_accel),
 	energy_capacity(energy_capacity),
+	display_colour(display_colour),
 	velocity(0,0),
 	acceleration(0,0),
 	model(model)
@@ -77,6 +76,7 @@ Entity::Entity() :
 	fov(30),
 	max_accel(20),
 	energy_capacity(200),
+	display_colour(0xFFFF0000),
 	velocity(0,0),
 	acceleration(0,0),
 	model(Net())
@@ -85,8 +85,8 @@ Entity::Entity() :
 Entity::~Entity() {}
 
 void Entity::update_velocity() {
-	velocity.x += acceleration.x / NUM_TICKS_PER_SEC;
-	velocity.y += acceleration.y / NUM_TICKS_PER_SEC;
+	velocity.x += std::ceil(acceleration.x / NUM_TICKS_PER_UNIT);
+	velocity.y += std::ceil(acceleration.y / NUM_TICKS_PER_UNIT);
 
 	float mag = velocity.length();
 	float drag = pow(mag,2)*DRAG_COEFF/(float)size; // density == 1
@@ -126,8 +126,8 @@ void EntityMap::do_tick() {
 	
 	// 3. Update positions
 	for (Entity* e : this->entities) {
-		e->x += e->velocity.x / NUM_TICKS_PER_SEC;
-		e->y += e->velocity.y / NUM_TICKS_PER_SEC;
+		e->x += e->velocity.x / NUM_TICKS_PER_UNIT;
+		e->y += e->velocity.y / NUM_TICKS_PER_UNIT;
 		this->check_and_fix_boundary_collisions(e);
 	}	
 	
@@ -136,8 +136,8 @@ void EntityMap::do_tick() {
 	this->check_collisions();
 }
 
-uint8_t num_height_divisions = 8;
-uint8_t num_width_divisions = 8;
+uint8_t num_height_divisions = 1;
+uint8_t num_width_divisions = 1;
 void EntityMap::update_collision_grid() {
 	for (std::vector<Entity*>& v : collision_grid) {
 		v.clear();
@@ -219,13 +219,13 @@ void EntityMap::handle_collision(Entity* e1, Entity* e2) {
 
 	// impulse
 	// -(1 + restitution)*vel_norm; resititution is 1 for elastic collision
-	float j = -1.5*vel_norm / (1.0/e1->size + 1.0/e2->size);
+	float j = -(1 + RESTITUTION) * vel_norm / (1.0/e1->size + 1.0/e2->size);
 
 	Vec2 I = normal * j;
 
 	//theres some complicated signage here so if it completely breaks after a single collision, this will be why.
-	e1->velocity += I * (-1.0/e1->size);
-	e2->velocity += I * (1.0/e2->size);
+	e1->velocity += I * (-1.0/e1->size) * (1.0 / NUM_TICKS_PER_UNIT);
+	e2->velocity += I * (1.0/e2->size) * (1.0 / NUM_TICKS_PER_UNIT);
 }
 
 /*  Apply fully elastic bounce entities colliding with the boundary; otherwise is a no-op.
