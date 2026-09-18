@@ -18,7 +18,7 @@ void frame_drawer(void* pixel_buffer) {
             entity_map->entities[i]->x, 
             entity_map->entities[i]->y, 
             entity_map->entities[i]->size, 
-            0xFFFF0000
+            entity_map->entities[i]->display_colour
         );
     }
 }
