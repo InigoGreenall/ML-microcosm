@@ -21,4 +21,17 @@ void frame_drawer(void* pixel_buffer) {
             entity_map->entities[i]->display_colour
         );
     }
+    for (unsigned short i = 0; i < entity_map->food_blobs.size(); i++) {
+        for (unsigned short j = 0; j < entity_map->food_blobs[i].size(); j++) {
+            if (entity_map->food_blobs[i][j] > 0) {
+                olivec_circle(
+                    oc, 
+                    j, 
+                    i, 
+                    entity_map->food_blobs[i][j], 
+                    0xFF00FF00
+                );
+            }
+        }
+    }
 }
