@@ -7,8 +7,8 @@
 extern const int NUM_TICKS_PER_UNIT;
 extern const int NUM_UNITS_PER_SEC;
 
-extern const int WIDTH;
-extern const int HEIGHT;
+const int WIDTH = 1000;
+const int HEIGHT = 1000;
 extern const int MAX_ENTITIES;
 
 #endif // MAIN_HPP
