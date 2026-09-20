@@ -1,19 +1,15 @@
-#include "main.hpp"
-#include "dtypes.hpp"
-#include "model.hpp"
-#include "softwarerender.hpp"
+#include "entity/entity_map.hpp"
+#include "graphics/softwarerender.hpp"
 #include <climits>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/time.h>
 extern "C" {
-    #include "testing-include/wlclient.h"
+    #include "../testing-include/wlclient.h"
 }
 
-const int NUM_TICKS_PER_UNIT = 20;  // controls physics tick fineness
-const int NUM_UNITS_PER_SEC = 2;    // controls actual play speed - only used in main.cpp
-const int MAX_ENTITIES = 65536;
-
+constexpr int TORCH_CPU_ID = 0;
+constexpr int TORCH_CUDA_ID = 1;
 static const torch::DeviceType DEVICE_LOOKUP[] = {torch::kCPU, torch::kCUDA};
 
 EntityMap* entity_map;

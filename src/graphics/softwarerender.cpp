@@ -1,9 +1,9 @@
-#include "main.hpp"
-#include "dtypes.hpp"
 #include "softwarerender.hpp"
+#include "../entity/entity_map.hpp"
+#include "../config.hpp"
 extern "C" {
     #define OLIVEC_IMPLEMENTATION
-    #include "testing-include/olive.c"
+    #include "../../testing-include/olive.c"
 }
 
 extern EntityMap* entity_map;
