@@ -12,8 +12,6 @@ extern "C" {
 
 const int NUM_TICKS_PER_UNIT = 20;  // controls physics tick fineness
 const int NUM_UNITS_PER_SEC = 2;    // controls actual play speed - only used in main.cpp
-const int WIDTH = 400;
-const int HEIGHT = 400;
 const int MAX_ENTITIES = 65536;
 
 static const torch::DeviceType DEVICE_LOOKUP[] = {torch::kCPU, torch::kCUDA};
@@ -26,6 +24,21 @@ int main() {
 
     // TODO: do program setup
     entity_map = new EntityMap;
+    entity_map->entities.push_back(
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, 0xFFFF0000, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, 0xFFFF0000, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, 0xFFFF0000, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, 0xFFFF0000, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
+    entity_map->entities.push_back(
+        new Entity(WIDTH/4, HEIGHT/4, 10, 1, 1, 1, 0xFFFF0000, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
+    );
     entity_map->entities.push_back(
         new Entity(WIDTH/2, HEIGHT/2, 30, 1, 1, 1, 0xFFFF0000, Net({7, 64, 64, 2},DEVICE_LOOKUP[TORCH_CPU_ID]))
     );

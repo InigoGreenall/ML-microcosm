@@ -1,6 +1,10 @@
 #ifndef DTYPES_HPP
 #define DTYPES_HPP
 
+#define FOOD_BLOB_MAX 1000
+
+// food blob spawn rate per tick
+#define FOOD_BLOB_SPAWN_RATE 1
 // #define DRAG_COEFF 0.0002159 // 0.47 (sphere drag coefficient) * 3/8 * 0.001225 (fluid density) 
 #define DRAG_COEFF 0.0017625 // same formula but replace fluid density with 0.01
 #define RESTITUTION 1 // for collisions
@@ -8,6 +12,7 @@
 #include <cstdint>
 #include <vector>
 #include <array>
+#include "main.hpp"
 #include "model.hpp"
 
 struct Vec2 {
@@ -58,11 +63,15 @@ class EntityMap {
         std::vector<Entity*> entities;
         std::array<std::vector<Entity*>, 64> collision_grid; //divided into 64 subsections
 
+        std::array<std::array<int, WIDTH>, HEIGHT> food_blobs; // 2D array of food blob energy values
+        int food_blob_count = 0; // current number of food blobs in the simulation
+
         void do_tick();
         void update_collision_grid();
         void check_collisions();
         void check_and_fix_boundary_collisions(Entity* e);
         void handle_collision(Entity* e1, Entity* e2);
+        void spawn_food_blobs();
 };
 
 #endif

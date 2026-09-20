@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+set(CMAKE_CXX_STANDARD 20)
 
 project(ML-microcosm)
 
@@ -14,7 +15,7 @@ add_executable(main main.cpp dtypes.cpp softwarerender.cpp model.cpp)
 target_link_libraries(main "${TORCH_LIBRARIES}")
 target_link_libraries(main ${PROJECT_SOURCE_DIR}/testing-include/libwlclient.a)
 target_link_libraries(main wayland-client)
-# set_property(TARGET main PROPERTY CXX_STANDARD 20)
+set_property(TARGET main PROPERTY CXX_STANDARD 20)
 
 # The following code block is suggested to be used on Windows.
 # According to https://github.com/pytorch/pytorch/issues/25457,
