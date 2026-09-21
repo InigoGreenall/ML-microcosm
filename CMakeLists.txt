@@ -4,17 +4,19 @@ set(CMAKE_CXX_STANDARD 20)
 project(ML-microcosm)
 
 find_package(Torch REQUIRED)
+find_package(SDL3 REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 # file(DOWNLOAD https://github.com/s7electric/wl-client/raw/refs/heads/main/libwlclient.a testing-include/libwlclient.a STATUS status)
 # file(DOWNLOAD https://github.com/s7electric/wl-client/raw/refs/heads/main/wlclient.h testing-include/wlclient.h STATUS status)
-execute_process(COMMAND wget https://github.com/s7electric/wl-client/raw/refs/heads/main/libwlclient.a -O ${PROJECT_SOURCE_DIR}/testing-include/libwlclient.a)
-execute_process(COMMAND wget https://github.com/s7electric/wl-client/raw/refs/heads/main/wlclient.h -O ${PROJECT_SOURCE_DIR}/testing-include/wlclient.h)
+# execute_process(COMMAND wget https://github.com/s7electric/wl-client/raw/refs/heads/main/libwlclient.a -O ${PROJECT_SOURCE_DIR}/testing-include/libwlclient.a)
+# execute_process(COMMAND wget https://github.com/s7electric/wl-client/raw/refs/heads/main/wlclient.h -O ${PROJECT_SOURCE_DIR}/testing-include/wlclient.h)
 file(GLOB_RECURSE SOURCE_FILES "src/main.cpp" "src/*/*.cpp")
 add_executable(main ${SOURCE_FILES})
 target_link_libraries(main "${TORCH_LIBRARIES}")
-target_link_libraries(main ${PROJECT_SOURCE_DIR}/testing-include/libwlclient.a)
-target_link_libraries(main wayland-client)
+# target_link_libraries(main ${PROJECT_SOURCE_DIR}/testing-include/libwlclient.a)
+# target_link_libraries(main wayland-client)
+target_link_libraries(main SDL3)
 set_property(TARGET main PROPERTY CXX_STANDARD 20)
 
 # The following code block is suggested to be used on Windows.

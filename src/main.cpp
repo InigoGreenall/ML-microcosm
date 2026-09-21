@@ -1,12 +1,9 @@
 #include "entity/entity_map.hpp"
-#include "graphics/softwarerender.hpp"
+#include "graphics/renderer.hpp"
 #include <climits>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/time.h>
-extern "C" {
-    #include "../testing-include/wlclient.h"
-}
 
 constexpr int TORCH_CPU_ID = 0;
 constexpr int TORCH_CUDA_ID = 1;
@@ -15,8 +12,7 @@ static const torch::DeviceType DEVICE_LOOKUP[] = {torch::kCPU, torch::kCUDA};
 EntityMap* entity_map;
 
 int main() {
-    struct state_t* state = init(WIDTH, HEIGHT);
-    install_frame_drawer(state, frame_drawer);
+    state_t* state = init(WIDTH, HEIGHT);
 
     // TODO: do program setup
     entity_map = new EntityMap;
@@ -66,7 +62,7 @@ int main() {
     struct timeval time1;
     struct timeval time2;
     useconds_t sleep_duration;
-    while (dispatch_events(state)) {
+    while (dispatch_events(state) != false) {
         gettimeofday(&time1, NULL);
         
         entity_map->do_tick();
@@ -88,7 +84,7 @@ int main() {
         std::cerr << "Waiting to request a frame.; sleeping for " << sleep_duration << " useconds \n"; 
         usleep(sleep_duration);
     }
-    return 0;
+    return 1;
 }
 
 
