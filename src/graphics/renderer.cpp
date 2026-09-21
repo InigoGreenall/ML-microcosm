@@ -1,12 +1,11 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_render.h>
-#include <atomic>
 #include <cstddef>
 #include "renderer.hpp"
 #include "../entity/entity_map.hpp"
 extern "C" {
     #define OLIVEC_IMPLEMENTATION
-    #include "../../testing-include/olive.c"
+    #include "../../vendor/olive.c"
 }
 
 extern EntityMap* entity_map;
