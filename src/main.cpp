@@ -1,9 +1,7 @@
 #include "entity/entity_map.hpp"
 #include "graphics/renderer.hpp"
-#include <climits>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/time.h>
+#include <chrono>
+#include <thread>
 
 constexpr int TORCH_CPU_ID = 0;
 constexpr int TORCH_CUDA_ID = 1;
@@ -58,31 +56,24 @@ int main() {
 
 
     /* Event loop */
-    struct timeval last_frame_time = {0, 0};
-    struct timeval time1;
-    struct timeval time2;
-    useconds_t sleep_duration;
+    std::chrono::steady_clock clock;
+    auto last_frame_time = clock.now();
     while (dispatch_events(state) != false) {
-        gettimeofday(&time1, NULL);
-        
+        auto time1 = clock.now();
         entity_map->do_tick();
-        gettimeofday(&time2, NULL);
+        auto time2 = clock.now();
 
-        std::cerr << "time2 usec: " << time2.tv_usec << ", last_frame usec: " << last_frame_time.tv_usec << '\n';
-        if ((time2.tv_usec - last_frame_time.tv_usec) >= (1000 * 1000 / (NUM_UNITS_PER_SEC * NUM_TICKS_PER_UNIT))
-        || time2.tv_sec > last_frame_time.tv_sec) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(time2 - last_frame_time);
+        if ((elapsed.count() >= (1000*1000 / (NUM_UNITS_PER_SEC * NUM_TICKS_PER_UNIT)))) {
             request_new_frame(state);
             last_frame_time = time2;
         }
 
-        if (time2.tv_sec > time1.tv_sec) {
-            sleep_duration = 1000*1000 / (NUM_TICKS_PER_UNIT * NUM_UNITS_PER_SEC) - (UINT_MAX - time1.tv_usec + time2.tv_usec);
-        }
-        else {
-            sleep_duration = 1000*1000 / (NUM_TICKS_PER_UNIT * NUM_UNITS_PER_SEC) - (time2.tv_usec - time1.tv_usec);
-        }
-        std::cerr << "Waiting to request a frame.; sleeping for " << sleep_duration << " useconds \n"; 
-        usleep(sleep_duration);
+        auto sleep_duration = std::chrono::microseconds(1000*1000 / (NUM_TICKS_PER_UNIT * NUM_UNITS_PER_SEC)) 
+            - std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1);
+        
+        std::cerr << "Waiting to request a frame; sleeping for " << sleep_duration.count() << " microseconds \n"; 
+        std:std::this_thread::sleep_for(sleep_duration);
     }
     return 1;
 }
